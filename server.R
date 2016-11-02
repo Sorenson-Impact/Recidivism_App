@@ -1,6 +1,12 @@
 library(shiny)
 library(expm)
 
+increase_exponentially <- function(n){
+  Oz %^% n
+  
+  return(Oz[1,1])
+}
+
 # Based on http://shiny.rstudio.com/gallery/tabsets.html
 
 # Define server logic for random distribution application
@@ -11,9 +17,13 @@ function(input, output) {
   # functions defined below then all use the value computed from
   # this expression
   data <- reactive({
-    dist <- rnorm
+    pr_prison <- (1 - input$recid_rate)^(1/(12 * 5))
+    pr_parole <- sign(.99) * abs(.99)^(1 / input$prison_time_served)
+    Oz <- matrix(c(p, 1-p, 1-p_parole, p_parole), nrow=2, byrow=TRUE)
     
-    dist(input$prison_sentence)
+    x <- c(1:60)
+    
+    unlist(map(x, increase_exponentially))
   })
   
   # Generate a plot of the data. Also uses the inputs to build
@@ -22,8 +32,8 @@ function(input, output) {
   # all expressions are called in the sequence implied by the
   # dependency graph
   output$plot <- renderPlot({
-    dist <- input$dist
-    n <- input$prison_sentence
+    dist <- rnorm
+    n <- input$prison_time_served
     
     hist(data(), 
          main=paste('r', dist, '(', n, ')', sep=''))
