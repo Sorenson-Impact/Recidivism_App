@@ -1,11 +1,27 @@
 library(shiny)
 library(expm)
+library(ggplot2)
 
-increase_exponentially <- function(n){
-  Oz %^% n
+
+build_markov_chain <- function(recid_rate, prison_time_served){
   
-  return(Oz[1,1])
+  # First we build a transition matrix
+  pr_prison <- (1 - recid_rate)^(1/(12 * 5))
+  pr_parole <- pr_parole <- (1 -.99)^(1/ prison_time_served)
+  tm <- matrix(c
+               (pr_prison, 1 - pr_prison, 1 - pr_parole, pr_parole), 
+               nrow=2, byrow=TRUE)
+  
+  months <- c(1:60)
+  on_parole <- vector("integer", length = length(months))
+  for(month in months){
+    y <- tm %^% month
+    on_parole[month] <- y[1]
+  }
+  
+  return(on_parole)
 }
+
 
 # Based on http://shiny.rstudio.com/gallery/tabsets.html
 
@@ -16,14 +32,9 @@ function(input, output) {
   # This is called whenever the inputs change. The output
   # functions defined below then all use the value computed from
   # this expression
+
   data <- reactive({
-    pr_prison <- (1 - input$recid_rate)^(1/(12 * 5))
-    pr_parole <- sign(.99) * abs(.99)^(1 / input$prison_time_served)
-    Oz <- matrix(c(p, 1-p, 1-p_parole, p_parole), nrow=2, byrow=TRUE)
-    
-    x <- c(1:60)
-    
-    unlist(map(x, increase_exponentially))
+    build_markov_chain(input$recid_rate, input$prison_time_served)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
@@ -36,7 +47,7 @@ function(input, output) {
     n <- input$prison_time_served
     
     hist(data(), 
-         main=paste('r', dist, '(', n, ')', sep=''))
+         main="test")
   })
   
   # Generate a summary of the data
