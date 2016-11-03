@@ -19,7 +19,11 @@ build_markov_chain <- function(recid_rate, prison_time_served){
     on_parole[month] <- y[1]
   }
   
-  return(on_parole)
+  in_prison <- 1 - on_parole
+  
+  parolees <- data.frame(months, in_prison, on_parole)
+  
+  return(parolees)
 }
 
 
@@ -43,11 +47,9 @@ function(input, output) {
   # all expressions are called in the sequence implied by the
   # dependency graph
   output$plot <- renderPlot({
-    dist <- rnorm
-    n <- input$prison_time_served
     
-    hist(data(), 
-         main="test")
+    ggplot(data(), aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
+    
   })
   
   # Generate a summary of the data
