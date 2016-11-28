@@ -66,7 +66,9 @@ survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
 build_markov_chain <- function(recid_rate, prison_time_served){
+  survival_rates<-matrix(c(recid*(recid_rate/.719),1-(recid*(recid_rate/.7139))),ncol = 2)
   number_in_prison<-rep(0,60)
+  prison_sample<-rnorm(1000,prison_time_served,8)
   for (i in 1:1000){
     prison_time=0
     df<-data.frame(month=numeric(0),
@@ -77,7 +79,7 @@ build_markov_chain <- function(recid_rate, prison_time_served){
       m.month<-month
       m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
       m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
-      prison_time<-ifelse(m.rearrested==1,prison_time_served,prison_time)
+      prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
       m.is_in_prison<-say_if_in_prison(prison_time)
       prison_time<-ifelse(m.is_in_prison==1,prison_time-1,prison_time)
       tmp.months_free <- ifelse(m.rearrested == 1, 0, m.months_free)
