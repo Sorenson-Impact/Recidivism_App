@@ -5,7 +5,7 @@ library(scales)
 fluidPage(
   
   # Application title
-  titlePanel("Tabsets"),
+  titlePanel("RecidiViz: Analyzing Reincarceration"),
   
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the
@@ -31,7 +31,12 @@ fluidPage(
                   "Cost / Prisoner / Yr:", 
                   value = 30000,
                   min = 0, 
-                  max = 60000)
+                  max = 60000),
+      
+      br(),
+      
+      actionButton("goButton", "Visualize!"),
+      p("This models 1,000 prisoners over 60 months, so it may take a few seconds.")
     ),
     
     # Show a tabset that includes a plot, summary, and table view

@@ -66,12 +66,12 @@ survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
 build_markov_chain <- function(recid_rate, prison_time_served){
-  survival_rates<-matrix(c(recid*(recid_rate/.719),1-(recid*(recid_rate/.7139))),ncol = 2)
+  survival_rates <- matrix(c(recid*(recid_rate/.719), 1-(recid*(recid_rate/.7139))), ncol = 2)
   number_in_prison <- rep(0,60)
   prison_sample <- rlnorm(1000, log(prison_time_served))
   for (i in 1:1000){
     prison_time=0
-    df<-data.frame(month=numeric(0),
+    df <- data.frame(month=numeric(0),
                    months_free=numeric(0),
                    is_in_prison=numeric(0),
                    rearrested=numeric(0))
@@ -121,7 +121,7 @@ function(input, output) {
   # functions defined below then all use the value computed from
   # this expression
   
-  data <- reactive({
+  data <- eventReactive(input$goButton, {
     build_markov_chain(input$recid_rate, input$prison_time_served)
   })
   
