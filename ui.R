@@ -43,7 +43,10 @@ fluidPage(
     # of the generated distribution
     mainPanel(
       tabsetPanel(type = "tabs", 
-                  tabPanel("Plot", plotOutput("plot")), 
+                  tabPanel("Plot", 
+                           plotOutput("plot"),
+                           h2("About This App"),
+                           p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")), 
                   tabPanel("Summary", verbatimTextOutput("summary")), 
                   tabPanel("Table", tableOutput("table"))
       )
