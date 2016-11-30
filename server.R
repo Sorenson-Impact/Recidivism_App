@@ -2,72 +2,16 @@ library(shiny)
 library(expm)
 library(ggplot2)
 
-recid<-c(	0.076
-          ,	0.041
-          ,	0.041
-          ,	0.04
-          ,	0.038
-          ,	0.031
-          ,	0.031
-          ,	0.027
-          ,	0.024
-          ,	0.022
-          ,	0.019
-          ,	0.02
-          ,	0.018
-          ,	0.016
-          ,	0.015
-          ,	0.015
-          ,	0.012
-          ,	0.013
-          ,	0.011
-          ,	0.011
-          ,	0.011
-          ,	0.009
-          ,	0.01
-          ,	0.009
-          ,	0.008
-          ,	0.008
-          ,	0.008
-          ,	0.008
-          ,	0.007
-          ,	0.006
-          ,	0.006
-          ,	0.006
-          ,	0.005
-          ,	0.006
-          ,	0.004
-          ,	0.006
-          ,	0.004
-          ,	0.005
-          ,	0.004
-          ,	0.005
-          ,	0.003
-          ,	0.004
-          ,	0.005
-          ,	0.004
-          ,	0.003
-          ,	0.004
-          ,	0.003
-          ,	0.003
-          ,	0.003
-          ,	0.003
-          ,	0.003
-          ,	0.004
-          ,	0.003
-          ,	0.003
-          ,	0.002
-          ,	0.003
-          ,	0.003
-          ,	0.002
-          ,	0.002
-          ,	0.003)
-survival_rates<-matrix(c(recid,1-recid),ncol=2)
+# This is a vector of the probability of recidivating given months free (i)
+# The values are calculated from national trends - see the "analyze_recidivism" script
+recid<-c(0.023, 0.027, 0.035, 0.035, 0.038, 0.033, 0.031, 0.028, 0.031, 0.025, 0.025, 0.025, 0.025, 0.021, 0.019, 0.019, 0.018, 0.018, 0.015, 0.013, 0.014, 0.013, 0.014, 0.014, 0.013, 0.01, 0.013, 0.011, 0.01, 0.01, 0.01, 0.009, 0.008, 0.008, 0.008, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.006, 0.005, 0.004, 0.005, 0.005, 0.004, 0.005, 0.004, 0.005, 0.004, 0.005, 0.005, 0.003, 0.003, 0.004, 0.005, 0.003, 0.004, 0.004)
+# survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
-build_markov_chain <- function(recid_rate, prison_time_served){
-  # TODO : ask Sam about this:
-  survival_rates <- matrix(c(recid*(recid_rate/.719), 1-(recid*(recid_rate/.7139))), ncol = 2)
+build_model <- function(recid_rate, prison_time_served){
+  # This is the matrix for calculating the prob of recidivating 
+  # We adjust by dividing the rate selected by the 5-year rate used for this data:
+  survival_rates <- matrix(c(recid*(recid_rate/.551), 1-(recid*(recid_rate/.551))), ncol = 2)
   
   number_in_prison <- rep(0,60)
   
@@ -99,6 +43,8 @@ build_markov_chain <- function(recid_rate, prison_time_served){
   
   return(parolees)
 }
+
+
 # Simply for summing later and helping with cost functions below
 say_if_in_prison <- function(m.prison_sentence) {
   ifelse(m.prison_sentence > 0, 1, 0)
@@ -120,6 +66,7 @@ calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
                 prob = c(survival_rates[m.months_free,])))
 }
 
+
 # Based on http://shiny.rstudio.com/gallery/tabsets.html
 
 # Define server logic for random distribution application
@@ -131,7 +78,7 @@ function(input, output) {
   # this expression
   
   data <- eventReactive(input$goButton, {
-    build_markov_chain(input$recid_rate, input$prison_time_served)
+    build_model(input$recid_rate, input$prison_time_served)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
