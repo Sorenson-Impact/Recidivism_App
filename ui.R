@@ -39,6 +39,7 @@ fluidPage(
       p("This models 1,000 prisoners over 60 months, so it may take a few seconds.")
     ),
     
+      
     # Show a tabset that includes a plot, summary, and table view
     # of the generated distribution
     mainPanel(

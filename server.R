@@ -66,9 +66,16 @@ survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
 build_markov_chain <- function(recid_rate, prison_time_served){
+  # TODO : ask Sam about this:
   survival_rates <- matrix(c(recid*(recid_rate/.719), 1-(recid*(recid_rate/.7139))), ncol = 2)
+  
   number_in_prison <- rep(0,60)
+  
+  # Made this a log normal becuse the long tail seems to capture the gap between
+  # Mean and Median in actual BJS data
+  # The log of the mean = the median for the actual data generated
   prison_sample <- rlnorm(1000, log(prison_time_served))
+  
   for (i in 1:1000){
     prison_time=0
     df <- data.frame(month=numeric(0),
@@ -88,7 +95,7 @@ build_markov_chain <- function(recid_rate, prison_time_served){
     single_agent_prison_time<-df$is_in_prison
     number_in_prison<-number_in_prison+as.numeric(single_agent_prison_time)
   }
-  parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison)
+  parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates)
   
   return(parolees)
 }
@@ -111,7 +118,9 @@ calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
                 size = 1, 
                 replace = FALSE, 
                 prob = c(survival_rates[m.months_free,])))
-}# Based on http://shiny.rstudio.com/gallery/tabsets.html
+}
+
+# Based on http://shiny.rstudio.com/gallery/tabsets.html
 
 # Define server logic for random distribution application
 function(input, output) {
