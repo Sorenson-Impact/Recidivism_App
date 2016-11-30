@@ -20,7 +20,7 @@ fluidPage(
       br(),
       
       sliderInput("prison_time_served", 
-                  "Average Prison Sentence (months):", 
+                  "Median Prison Sentence (months):", 
                   value = 16,
                   min = 1, 
                   max = 60),
