@@ -2,6 +2,8 @@ library(shiny)
 library(expm)
 library(ggplot2)
 
+default_data <- read.csv("./default_data.csv")
+
 # This is a vector of the probability of recidivating given months free (i)
 # The values are calculated from national trends - see the "analyze_recidivism" script
 recid<-c(0.023, 0.027, 0.035, 0.035, 0.038, 0.033, 0.031, 0.028, 0.031, 0.025, 0.025, 0.025, 0.025, 0.021, 0.019, 0.019, 0.018, 0.018, 0.015, 0.013, 0.014, 0.013, 0.014, 0.014, 0.013, 0.01, 0.013, 0.011, 0.01, 0.01, 0.01, 0.009, 0.008, 0.008, 0.008, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.006, 0.005, 0.004, 0.005, 0.005, 0.004, 0.005, 0.004, 0.005, 0.004, 0.005, 0.005, 0.003, 0.003, 0.004, 0.005, 0.003, 0.004, 0.004)
@@ -72,6 +74,8 @@ calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
 # Define server logic for random distribution application
 function(input, output) {
   
+  beginning <- Sys.time()
+  
   # Reactive expression to generate the requested distribution.
   # This is called whenever the inputs change. The output
   # functions defined below then all use the value computed from
@@ -86,6 +90,10 @@ function(input, output) {
   # and the data reactive expression are both tracked, and
   # all expressions are called in the sequence implied by the
   # dependency graph
+  
+  end <- Sys.time()
+  print(end - beginning)
+  
   output$plot <- renderPlot({
     
     ggplot(data(), aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
