@@ -35,8 +35,8 @@ fluidPage(
       
       br(),
       
-      actionButton("goButton", "Visualize!"),
-      p("This models 1,000 prisoners over 60 months, so it may take a few seconds.")
+      actionButton("goButton", "Re-Run the Model"),
+      p("This simulates 1,000 prisoners over 60 months, so it may take a few seconds.")
     ),
     
       

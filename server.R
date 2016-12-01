@@ -10,7 +10,7 @@ recid<-c(0.023, 0.027, 0.035, 0.035, 0.038, 0.033, 0.031, 0.028, 0.031, 0.025, 0
 # survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
-build_model <- function(recid_rate, prison_time_served){
+build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # This is the matrix for calculating the prob of recidivating 
   # We adjust by dividing the rate selected by the 5-year rate used for this data:
   survival_rates <- matrix(c(recid*(recid_rate/.551), 1-(recid*(recid_rate/.551))), ncol = 2)
@@ -37,11 +37,21 @@ build_model <- function(recid_rate, prison_time_served){
       prison_time<-ifelse(m.is_in_prison==1,prison_time-1,prison_time)
       tmp.months_free <- ifelse(m.rearrested == 1, 0, m.months_free)
       df[month,]<-c(m.month,m.months_free,m.is_in_prison,m.rearrested)
+      
     }
     single_agent_prison_time<-df$is_in_prison
     number_in_prison<-number_in_prison+as.numeric(single_agent_prison_time)
+    
+    # If we were passed a progress update function, call it
+    if (is.function(updateProgress)) {
+      text <- paste0("Simulation:", i, "/1,000")
+      updateProgress(detail = text)
+    }
+    
   }
   parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates)
+  
+  
   
   return(parolees)
 }
@@ -78,15 +88,36 @@ function(input, output) {
   rv<-reactiveValues(data=default_data)
   
   # Updates the data if they push the goButton
+  # and shows progress on a progress bar
   observeEvent(input$goButton, {
-    rv$data <- build_model(input$recid_rate, input$prison_time_served)
+    
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+    progress$set(message = "Re-running Model", value = 0)
+    # Close the progress when this reactive exits (even if there's an error)
+    on.exit(progress$close())
+    
+    # Create a callback function to update progress.
+    # Each time this is called:
+    # - If `value` is NULL, it will move the progress bar 1/1000 of the remaining
+    #   distance. If non-NULL, it will set the progress to that value.
+    # - It also accepts optional detail text.
+    updateProgress <- function(value = NULL, detail = NULL) {
+      if (is.null(value)) {
+        value <- progress$getValue()
+        value <- value + (progress$getMax() - value) / 1000
+      }
+      progress$set(value = value, detail = detail)
+    }
+    
+    # Compute the new data, and pass in the updateProgress function so
+    # that it can update the progress indicator.
+    rv$data <- build_model(input$recid_rate, input$prison_time_served, updateProgress)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
   output$plot <- renderPlot({
-    
     ggplot(rv$data, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
-    
   })
   
   # Generate a summary of the data
