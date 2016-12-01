@@ -81,8 +81,14 @@ function(input, output) {
   # functions defined below then all use the value computed from
   # this expression
   
-  data <- eventReactive(input$goButton, {
-    build_model(input$recid_rate, input$prison_time_served)
+  data <- reactive(default_data)
+  
+  # data <- eventReactive(input$goButton, {
+  #   build_model(input$recid_rate, input$prison_time_served)
+  # })
+  
+  observeEvent(input$goButton, {
+    data <- build_model(input$recid_rate, input$prison_time_served)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
