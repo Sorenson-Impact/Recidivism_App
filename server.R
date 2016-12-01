@@ -74,32 +74,15 @@ calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
 # Define server logic for random distribution application
 function(input, output) {
   
-  beginning <- Sys.time()
-  
-  # Reactive expression to generate the requested distribution.
-  # This is called whenever the inputs change. The output
-  # functions defined below then all use the value computed from
-  # this expression
-  
+  # Loads default data
   rv<-reactiveValues(data=default_data)
   
-  # data <- eventReactive(input$goButton, {
-  #   build_model(input$recid_rate, input$prison_time_served)
-  # })
-  
+  # Updates the data if they push the goButton
   observeEvent(input$goButton, {
     rv$data <- build_model(input$recid_rate, input$prison_time_served)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
-  # the plot label. Note that the dependencies on both the inputs
-  # and the data reactive expression are both tracked, and
-  # all expressions are called in the sequence implied by the
-  # dependency graph
-  
-  end <- Sys.time()
-  print(end - beginning)
-  
   output$plot <- renderPlot({
     
     ggplot(rv$data, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
@@ -108,12 +91,12 @@ function(input, output) {
   
   # Generate a summary of the data
   output$summary <- renderPrint({
-    summary(data())
+    summary(rv$data)
   })
   
   # Generate an HTML table view of the data
   output$table <- renderTable({
-    data.frame(x=data())
+    data.frame(x=rv$data)
     
   })
   
