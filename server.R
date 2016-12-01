@@ -81,14 +81,14 @@ function(input, output) {
   # functions defined below then all use the value computed from
   # this expression
   
-  data <- reactive(default_data)
+  rv<-reactiveValues(data=default_data)
   
   # data <- eventReactive(input$goButton, {
   #   build_model(input$recid_rate, input$prison_time_served)
   # })
   
   observeEvent(input$goButton, {
-    data <- build_model(input$recid_rate, input$prison_time_served)
+    rv$data <- build_model(input$recid_rate, input$prison_time_served)
   })
   
   # Generate a plot of the data. Also uses the inputs to build
@@ -102,7 +102,7 @@ function(input, output) {
   
   output$plot <- renderPlot({
     
-    ggplot(data(), aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
+    ggplot(rv$data, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
     
   })
   
