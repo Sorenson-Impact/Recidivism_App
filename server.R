@@ -125,7 +125,7 @@ function(input, output) {
     rv$data <- build_model(input$recid_rate, input$prison_time_served, updateProgress)
   })
 
-   Generate a plot of the data. Also uses the inputs to build
+   #Generate a plot of the data. Also uses the inputs to build
   output$plot <- renderPlot({
     ggplot(rv$data, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
   })
@@ -140,35 +140,40 @@ function(input, output) {
     data.frame(x=rv$data)
     
   })
+
   
-  stayp<-data.frame(Value=data$on_parole)
-  staypr<-data.frame(Value=data$prisoners)
-  stayp<- stayp[-nrow(stayp),]
-  staypr<- staypr[-nrow(staypr),]
-  stay<-rbind(data.frame(Value=stayp),data.frame(Value=staypr))
-  
-  leavep<-data.frame(Value=data$rearrested)
-  leavepr<-data.frame(Value=data$released)
-  leavep<- leavep[-nrow(leavep),]
-  leavepr<- leavepr[-nrow(leavepr),]
-  leave<-rbind(data.frame(Value=leavep),data.frame(Value=leavepr))
-  
-  
-  
-  edges<-data.frame(N1 = paste0(rep(1:59, each = 1), rep(LETTERS[1:2], each = 59)),N2 = paste0(rep(2:60, each = 1), rep(LETTERS[1:2], each = 59)),Value=stay)
-  edges2<-data.frame(N1 = paste0(rep(1:59, each = 1), rep(LETTERS[1:2], each = 59)),N2 = paste0(rep(2:60, each = 1), rep(LETTERS[2:1], each = 59)),Value=leave)
-  edgesf<-rbind(edges,edges2)
-  
-  nodes<-data.frame(ID = paste0(rep(1:60, each = 1), rep(LETTERS[1:2], each = 60)),x = rep(1:60, each = 1),y=rep(2:1, each = 60))
-  rownames(nodes) = nodes$ID 
-  
-  palette = paste0(brewer.pal(4, "Set1"), "60")
-  styles = lapply(nodes$y, function(n) {list(col = palette[n+1], lty = 0, textcol = "black")})
-  names(styles) = nodes$ID
-  
-  river<-makeRiver(nodes,edgesf,edge_styles = styles)
-  
-  output$river<-renderPlot( plot(river))
+  output$river<-renderPlot({ 
+    data<-rv$data
+    stayp<-data.frame(Value=data$on_parole)
+    staypr<-data.frame(Value=data$prisoners)
+    stayp<- c(as.numeric(stayp[c(12,24,36,48,60),]))
+    staypr<- c(as.numeric(staypr[c(12,24,36,48,60),]))
+    stay<-rbind(data.frame(Value=stayp),data.frame(Value=staypr))
+    
+    leavep<-data.frame(Value=data$rearrested)
+    leavepr<-data.frame(Value=data$released)
+    leavep<- c(sum(as.numeric(leavep[1:12,])),sum(as.numeric(leavep[13:24,])),sum(as.numeric(leavep[25:36,])),sum(as.numeric(leavep[37:48,])),sum(as.numeric(leavep[49:60,])))
+    leavepr<- c(sum(as.numeric(leavepr[1:12,])),sum(as.numeric(leavepr[13:24,])),sum(as.numeric(leavepr[25:36,])),sum(as.numeric(leavepr[37:48,])),sum(as.numeric(leavepr[49:60,])))
+    
+    leave<-rbind(data.frame(Value=leavep),data.frame(Value=leavepr))
+    
+    
+    
+    edges<-data.frame(N1 = paste0(rep(0:4, each = 1), rep(LETTERS[1:2], each = 5)),N2 = paste0(rep(1:5, each = 1), rep(LETTERS[1:2], each = 5)),Value=stay)
+    edges2<-data.frame(N1 = paste0(rep(0:4, each = 1), rep(LETTERS[1:2], each = 5)),N2 = paste0(rep(1:5, each = 1), rep(LETTERS[2:1], each = 5)),Value=leave)
+    edgesf<-rbind(edges,edges2)
+    
+    nodes<-data.frame(ID = paste0(rep(0:5, each = 1), rep(LETTERS[1:2], each = 6)),x = rep(0:5, each = 1),y=rep(2:1, each = 6))
+    rownames(nodes) = nodes$ID 
+    
+    palette = paste0(brewer.pal(4, "Set1"), "60")
+    styles = lapply(nodes$y, function(n) {list(col = palette[n+1], lty = 0, textcol = "black")})
+    names(styles) = nodes$ID
+    
+    river<-makeRiver(nodes,edgesf,edge_styles = styles)
+    
+    
+    plot(river)})
   
   
   
