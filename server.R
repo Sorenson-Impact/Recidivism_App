@@ -25,7 +25,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # Mean and Median in actual BJS data
   # The log of the mean = the median for the actual data generated
   prison_sample <- rlnorm(1000, log(prison_time_served))
-  
+  numberOfArrests<-c(rep.int(0,times = 1000))
   for (i in 1:1000){
     prison_time=0
     df <- data.frame(month=numeric(0),
@@ -37,6 +37,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
       m.month<-month
       m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
       m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
+      numberOfArrests[i]<-ifelse(m.rearrested==1,numberOfArrests[i]+1,numberOfArrests[i])
       prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
       m.released<-ifelse(prison_time==1,1,0)
       m.is_in_prison<-say_if_in_prison(prison_time)
@@ -60,10 +61,8 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
     
   }
   parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates, released=number_released,rearrested=number_rearrested)
-  
-  
-  
-  return(parolees)
+  returns<-list(parolees=parolees,arrested=numberOfArrests)
+  return(returns)
 }
 
 
@@ -127,23 +126,28 @@ function(input, output) {
 
    #Generate a plot of the data. Also uses the inputs to build
   output$plot <- renderPlot({
-    ggplot(rv$data, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
+    data<-rv$data
+    ggplot(data$parolees, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
   })
   
   # Generate a summary of the data
   output$summary <- renderPrint({
-    summary(rv$data)
+    data<-rv$data
+    summary(data$parolees)
+    
   })
   
   # Generate an HTML table view of the data
   output$table <- renderTable({
-    data.frame(x=rv$data)
-    
+    data<-rv$data
+    #data.frame(x=data$parolees)
+    data.frame(x=data$arrested)
   })
 
   
   output$river<-renderPlot({ 
     data<-rv$data
+    data<-data$parolees
     stayp<-data.frame(Value=data$on_parole)
     staypr<-data.frame(Value=data$prisoners)
     stayp<- c(as.numeric(stayp[c(12,24,36,48,60),]))
