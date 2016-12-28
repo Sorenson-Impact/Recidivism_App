@@ -1,5 +1,6 @@
 library(shiny)
 library(scales)
+library(plotly)
 
 # Define UI for random distribution application 
 fluidPage(
@@ -45,13 +46,18 @@ fluidPage(
     mainPanel(
       tabsetPanel(type = "tabs", 
                   tabPanel("Plot", 
-                           plotOutput("plot"),
+                           plotlyOutput("plot"),
                            h2("About This App"),
-                           p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")), 
+                           p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."),
+                            plotlyOutput("plot2"),
+                            h2("About This App"),
+                            p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."),
+      plotlyOutput("plot3"),
+      h2("About This App"),
+      p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
+    
                   tabPanel("Summary", verbatimTextOutput("summary")), 
-                  tabPanel("Table", tableOutput("table"),
-                  tabPanel("RiverPlot",plotOutput("river")))
+                  tabPanel("Table", tableOutput("table")))
       )
     )
   )
-)

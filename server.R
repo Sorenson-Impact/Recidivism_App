@@ -3,8 +3,11 @@ library(expm)
 library(ggplot2)
 library(riverplot)
 library(RColorBrewer)
+library(plotly)
 
 default_data <- read.csv("./default_data.csv")
+default_arrests<-read.csv("./default_arrests.csv")
+default_recid<-read.csv("./default_recid_rates.csv")
 
 # This is a vector of the probability of recidivating given months free (i)
 # The values are calculated from national trends - see the "analyze_recidivism" script
@@ -26,6 +29,8 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # The log of the mean = the median for the actual data generated
   prison_sample <- rlnorm(1000, log(prison_time_served))
   numberOfArrests<-c(rep.int(0,times = 1000))
+  first_arrests<-c(rep.int(0,times = 60))
+  
   for (i in 1:1000){
     prison_time=0
     df <- data.frame(month=numeric(0),
@@ -38,6 +43,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
       m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
       m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
       numberOfArrests[i]<-ifelse(m.rearrested==1,numberOfArrests[i]+1,numberOfArrests[i])
+      first_arrests[month]<-ifelse(m.rearrested==1 & numberOfArrests[i]==1,first_arrests[month]+1,first_arrests[month])
       prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
       m.released<-ifelse(prison_time==1,1,0)
       m.is_in_prison<-say_if_in_prison(prison_time)
@@ -61,7 +67,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
     
   }
   parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates, released=number_released,rearrested=number_rearrested)
-  returns<-list(parolees=parolees,arrested=numberOfArrests)
+  returns<-list(parolees=parolees,arrested=numberOfArrests,rates=first_arrests)
   return(returns)
 }
 
@@ -92,9 +98,9 @@ calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
 
 # Define server logic for random distribution application
 function(input, output) {
-  
+  default_list<-list(parolees=default_data,arrested=default_arrests,rates=default_recid)
   # Loads default data
-  rv<-reactiveValues(data=default_data)
+  rv<-reactiveValues(data=default_list)
   
   # Updates the data if they push the goButton
   # and shows progress on a progress bar
@@ -125,9 +131,29 @@ function(input, output) {
   })
 
    #Generate a plot of the data. Also uses the inputs to build
-  output$plot <- renderPlot({
-    data<-rv$data
-    ggplot(data$parolees, aes(x = months, y = on_parole)) + geom_bar(stat = "identity")
+  output$plot <- renderPlotly({
+    returned_data<-rv$data
+    returned_stack<-returned_data$parolees
+    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("on parole","prisoners"),each=60),months=rep.int(1:60,2))
+    p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Value:", values,"<br>Month:",months,"<br>Status:",status)))+ geom_bar(stat = "identity",position = "stack")
+    ggplotly(p,tooltip = "text")
+    
+  })
+  
+  output$plot2<- renderPlotly({
+    returned_data<-rv$data
+    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,months=rep.int(1:60,2))
+    p<-ggplot(returned_rates,aes(x=months))+
+    geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)
+    
+    ggplotly(p)
+  })
+  
+  output$plot3<-renderPlotly({
+    returned_data<-rv$data
+    returned_arrests<-data.frame(Arrests=returned_data$arrested)
+    p<-ggplot(returned_arrests,aes(x=Arrests))+geom_histogram(binwidth = 1)
+    ggplotly(p)
   })
   
   # Generate a summary of the data
@@ -135,50 +161,15 @@ function(input, output) {
     data<-rv$data
     summary(data$parolees)
     
+    
   })
   
   # Generate an HTML table view of the data
   output$table <- renderTable({
-    data<-rv$data
-    #data.frame(x=data$parolees)
-    data.frame(x=data$arrested)
+    returned_data<-rv$data
+    data.frame(x=returned_data$parolees)
   })
 
-  
-  output$river<-renderPlot({ 
-    data<-rv$data
-    data<-data$parolees
-    stayp<-data.frame(Value=data$on_parole)
-    staypr<-data.frame(Value=data$prisoners)
-    stayp<- c(as.numeric(stayp[c(12,24,36,48,60),]))
-    staypr<- c(as.numeric(staypr[c(12,24,36,48,60),]))
-    stay<-rbind(data.frame(Value=stayp),data.frame(Value=staypr))
-    
-    leavep<-data.frame(Value=data$rearrested)
-    leavepr<-data.frame(Value=data$released)
-    leavep<- c(sum(as.numeric(leavep[1:12,])),sum(as.numeric(leavep[13:24,])),sum(as.numeric(leavep[25:36,])),sum(as.numeric(leavep[37:48,])),sum(as.numeric(leavep[49:60,])))
-    leavepr<- c(sum(as.numeric(leavepr[1:12,])),sum(as.numeric(leavepr[13:24,])),sum(as.numeric(leavepr[25:36,])),sum(as.numeric(leavepr[37:48,])),sum(as.numeric(leavepr[49:60,])))
-    
-    leave<-rbind(data.frame(Value=leavep),data.frame(Value=leavepr))
-    
-    
-    
-    edges<-data.frame(N1 = paste0(rep(0:4, each = 1), rep(LETTERS[1:2], each = 5)),N2 = paste0(rep(1:5, each = 1), rep(LETTERS[1:2], each = 5)),Value=stay)
-    edges2<-data.frame(N1 = paste0(rep(0:4, each = 1), rep(LETTERS[1:2], each = 5)),N2 = paste0(rep(1:5, each = 1), rep(LETTERS[2:1], each = 5)),Value=leave)
-    edgesf<-rbind(edges,edges2)
-    
-    nodes<-data.frame(ID = paste0(rep(0:5, each = 1), rep(LETTERS[1:2], each = 6)),x = rep(0:5, each = 1),y=rep(2:1, each = 6))
-    rownames(nodes) = nodes$ID 
-    
-    palette = paste0(brewer.pal(4, "Set1"), "60")
-    styles = lapply(nodes$y, function(n) {list(col = palette[n+1], lty = 0, textcol = "black")})
-    names(styles) = nodes$ID
-    
-    river<-makeRiver(nodes,edgesf,edge_styles = styles)
-    
-    
-    plot(river)})
-  
-  
+   
   
 }
