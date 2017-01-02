@@ -11,14 +11,21 @@ default_recid<-read.csv("./default_recid_rates.csv")
 
 # This is a vector of the probability of recidivating given months free (i)
 # The values are calculated from national trends - see the "analyze_recidivism" script
-recid<-c(0.023, 0.027, 0.035, 0.035, 0.038, 0.033, 0.031, 0.028, 0.031, 0.025, 0.025, 0.025, 0.025, 0.021, 0.019, 0.019, 0.018, 0.018, 0.015, 0.013, 0.014, 0.013, 0.014, 0.014, 0.013, 0.01, 0.013, 0.011, 0.01, 0.01, 0.01, 0.009, 0.008, 0.008, 0.008, 0.009, 0.008, 0.007, 0.006, 0.005, 0.005, 0.006, 0.005, 0.004, 0.005, 0.005, 0.004, 0.005, 0.004, 0.005, 0.004, 0.005, 0.005, 0.003, 0.003, 0.004, 0.005, 0.003, 0.004, 0.004)
+cumu_prob_recid<-c(0.0231,	0.0493,	0.0827,	0.1147,	0.1479,	0.1764,	0.2019,	0.2245,	0.2487,	0.2678,	0.2859,	0.3041,	0.3214,	0.3358,	0.3484,	0.361,	0.3723,	0.3835,	0.3928,	0.4009,	0.4092,	0.4169,	0.4248,	0.4328,	0.4403,	0.446,	0.453,	0.4588,	0.4642,	0.4694,	0.4745,	0.4794,	0.4836,	0.4878,	0.4921,	0.4966,	0.5004,	0.5037,	0.5069,	0.5096,	0.5121,	0.5149,	0.5173,	0.5194,	0.522,	0.5242,	0.5263,	0.5288,	0.5307,	0.533,	0.535,	0.5371,	0.5394,	0.541,	0.5425,	0.5443,	0.5465,	0.5479,	0.5495,	0.5511)
+
 # survival_rates<-matrix(c(recid,1-recid),ncol=2)
 
 
 build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # This is the matrix for calculating the prob of recidivating 
   # We adjust by dividing the rate selected by the 5-year rate used for this data:
-  survival_rates <- matrix(c(recid*(recid_rate/.551), 1-(recid*(recid_rate/.551))), ncol = 2)
+  cumu_prob_recid<-cumu_prob_recid*(recid_rate/.551)
+ recid_rates<-data.frame(cumu_prob_not_recid=1-cumu_prob_recid) 
+ recid_rates<-recid_rates%>%mutate(recid=1-cumu_prob_not_recid/lag(cumu_prob_not_recid))
+ recid_rates$recid[1]=1-recid_rates$cumu_prob_not_recid[1]
+ prob_rec<-round(recid_rates$recid,digits = 3)
+  
+  survival_rates <- matrix(c(prob_rec, 1-prob_rec), ncol = 2)
   
   number_in_prison <- rep(0,60)
   number_released<-rep(0,60)
@@ -62,7 +69,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
     # If we were passed a progress update function, call it
     if (is.function(updateProgress)) {
       text <- paste0("Simulation:", i, "/1,000")
-      updateProgress(detail = text)
+      updateProgress(detail = text, value = i/1000)
     }
     
   }
@@ -157,10 +164,10 @@ function(input, output) {
   })
   
   # Generate a summary of the data
-  output$summary <- renderPrint({
-    data<-rv$data
-    summary(data$parolees)
-    
+  output$summary <- renderText({
+    #data<-rv$data
+    #summary(data$parolees)
+    paste("something blue")
     
   })
   
@@ -170,6 +177,18 @@ function(input, output) {
     data.frame(x=returned_data$parolees)
   })
 
-   
+  output$graph1<-renderUI({
+    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    )
+  })
   
+  output$graph2<-renderUI({
+    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    )
+  })
+  
+  output$graph3<-renderUI({
+    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    )
+  })
 }

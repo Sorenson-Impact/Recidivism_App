@@ -11,8 +11,8 @@ fluidPage(
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the
   # br() element to introduce extra vertical spacing
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(
+    column(3,
       sliderInput("recid_rate", 
                   "5-yr Recidivism Rate:", 
                   value = .55,
@@ -43,20 +43,21 @@ fluidPage(
       
     # Show a tabset that includes a plot, summary, and table view
     # of the generated distribution
-    mainPanel(
+    column(8,
       tabsetPanel(type = "tabs", 
                   tabPanel("Plot", 
+                           column(8,
                            plotlyOutput("plot"),
-                           h2("About This App"),
-                           p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."),
-                            plotlyOutput("plot2"),
-                            h2("About This App"),
-                            p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."),
-      plotlyOutput("plot3"),
-      h2("About This App"),
-      p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
+                           plotlyOutput("plot2"),
+                           plotlyOutput("plot3")
+                           ),
+                           column(4,
+                           htmlOutput("graph1"),
+                           htmlOutput("graph2"),
+                           htmlOutput("graph3")
+)),
     
-                  tabPanel("Summary", verbatimTextOutput("summary")), 
+                  tabPanel("Summary", textOutput("summary")), 
                   tabPanel("Table", tableOutput("table")))
       )
     )
