@@ -1,18 +1,25 @@
 library(shiny)
 library(scales)
 library(plotly)
-
+library(shinydashboard)
 # Define UI for random distribution application 
-fluidPage(
+
+dashboardPage(
+  dashboardHeader(title ="RecidiViz: Analyzing Reincarceration" ,
+                  titleWidth = 350),
+  dashboardSidebar(disable= TRUE),
+dashboardBody (
   
   # Application title
-  titlePanel("RecidiViz: Analyzing Reincarceration"),
+  
   
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the
   # br() element to introduce extra vertical spacing
   fluidRow(
     column(3,
+      h3("About this App"),
+      box(width=12, p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
       sliderInput("recid_rate", 
                   "5-yr Recidivism Rate:", 
                   value = .55,
@@ -43,22 +50,22 @@ fluidPage(
       
     # Show a tabset that includes a plot, summary, and table view
     # of the generated distribution
-    column(8,
+    column(9,
       tabsetPanel(type = "tabs", 
                   tabPanel("Plot", 
-                           column(8,
-                           plotlyOutput("plot"),
-                           plotlyOutput("plot2"),
-                           plotlyOutput("plot3")
-                           ),
-                           column(4,
-                           htmlOutput("graph1"),
-                           htmlOutput("graph2"),
-                           htmlOutput("graph3")
-)),
+                           fluidRow(box(width=7, plotlyOutput("plot")),
+                                 box( width=5, htmlOutput("graph1"))),
+                           fluidRow(box(plotlyOutput("plot2")),
+                                    box(htmlOutput("graph2"))),
+                           fluidRow(box(plotlyOutput("plot3")),
+                                    box(htmlOutput("graph3")))
+
+                           
+                           
+),
     
-                  tabPanel("Summary", textOutput("summary")), 
+                  tabPanel("Summary", verbatimTextOutput("summary")), 
                   tabPanel("Table", tableOutput("table")))
       )
     )
-  )
+  ))

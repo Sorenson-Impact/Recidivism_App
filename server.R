@@ -10,7 +10,7 @@ default_arrests<-read.csv("./default_arrests.csv")
 default_recid<-read.csv("./default_recid_rates.csv")
 
 # This is a vector of the probability of recidivating given months free (i)
-# The values are calculated from national trends - see the "analyze_recidivism" script
+#values used from rpts05p0510f01.csv which has national recidivism trends
 cumu_prob_recid<-c(0.0231,	0.0493,	0.0827,	0.1147,	0.1479,	0.1764,	0.2019,	0.2245,	0.2487,	0.2678,	0.2859,	0.3041,	0.3214,	0.3358,	0.3484,	0.361,	0.3723,	0.3835,	0.3928,	0.4009,	0.4092,	0.4169,	0.4248,	0.4328,	0.4403,	0.446,	0.453,	0.4588,	0.4642,	0.4694,	0.4745,	0.4794,	0.4836,	0.4878,	0.4921,	0.4966,	0.5004,	0.5037,	0.5069,	0.5096,	0.5121,	0.5149,	0.5173,	0.5194,	0.522,	0.5242,	0.5263,	0.5288,	0.5307,	0.533,	0.535,	0.5371,	0.5394,	0.541,	0.5425,	0.5443,	0.5465,	0.5479,	0.5495,	0.5511)
 
 # survival_rates<-matrix(c(recid,1-recid),ncol=2)
@@ -20,6 +20,8 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # This is the matrix for calculating the prob of recidivating 
   # We adjust by dividing the rate selected by the 5-year rate used for this data:
   cumu_prob_recid<-cumu_prob_recid*(recid_rate/.551)
+  #the next four lines replicate the procdure used in analyze_recidivism 
+  #to replicate recidivism trends based on national trends
  recid_rates<-data.frame(cumu_prob_not_recid=1-cumu_prob_recid) 
  recid_rates<-recid_rates%>%mutate(recid=1-cumu_prob_not_recid/lag(cumu_prob_not_recid))
  recid_rates$recid[1]=1-recid_rates$cumu_prob_not_recid[1]
@@ -141,17 +143,20 @@ function(input, output) {
   output$plot <- renderPlotly({
     returned_data<-rv$data
     returned_stack<-returned_data$parolees
-    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("on parole","prisoners"),each=60),months=rep.int(1:60,2))
-    p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Value:", values,"<br>Month:",months,"<br>Status:",status)))+ geom_bar(stat = "identity",position = "stack")
+    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
+    p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
+      geom_bar(stat = "identity",position = "stack")+
+      labs(x="Months",y="Count")
     ggplotly(p,tooltip = "text")
     
   })
   
   output$plot2<- renderPlotly({
     returned_data<-rv$data
-    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,months=rep.int(1:60,2))
-    p<-ggplot(returned_rates,aes(x=months))+
-    geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)
+    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,Month=rep.int(1:60,2))
+    p<-ggplot(returned_rates,aes(x=Month))+
+    geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
+    labs(x="Months",y="% Recidivated", colour="Status")
     
     ggplotly(p)
   })
@@ -159,15 +164,15 @@ function(input, output) {
   output$plot3<-renderPlotly({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    p<-ggplot(returned_arrests,aes(x=Arrests))+geom_histogram(binwidth = 1)
+    p<-ggplot(returned_arrests,aes(x= Arrests))+geom_histogram(binwidth = 1)+
+    labs(x="Number of Arrests in 60 months",y="Count")
     ggplotly(p)
   })
   
   # Generate a summary of the data
   output$summary <- renderText({
-    #data<-rv$data
-    #summary(data$parolees)
-    paste("something blue")
+    data<-rv$data
+    summary(data$parolees)
     
   })
   
@@ -178,17 +183,24 @@ function(input, output) {
   })
 
   output$graph1<-renderUI({
-    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    returned_data<-rv$data
+    returned_stack<-returned_data$parolees
+    stack<-data.frame(values=c(on_parole= returned_stack$on_parole,returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
+    HTML(paste(h3("Number in Parole/Prison"),p("It is sometimes assumed that because of high recidivism rates, that over the next few years the porportion number of prisoners on parole would grow smaller and smaller. However in reality it levels off after an initial drop resulting in about ",percent( returned_stack$on_parole[60]/1000),"on parole after 60 months. This can be explained by a low average number of rearrests. "))
     )
   })
   
   output$graph2<-renderUI({
-    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    returned_data<-rv$data
+    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,months=rep.int(1:60,2))
+    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likely hood they recidivate drops significantly.The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),"."))
     )
   })
   
   output$graph3<-renderUI({
-    HTML(paste(h2("About This App"), p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong."))
+    returned_data<-rv$data
+    returned_arrests<-data.frame(Arrests=returned_data$arrested)
+    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually released prisoners are not rearrested more than once or twice with "),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"only getting rearrested 1 or 2 times.This may only be in the 60 months however the chance for recidivism clearly lowers the longer one has been out of prison so these averages should hold for longer time periods. "))
     )
   })
 }
