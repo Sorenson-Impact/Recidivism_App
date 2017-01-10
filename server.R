@@ -143,7 +143,7 @@ function(input, output) {
   output$plot <- renderPlotly({
     returned_data<-rv$data
     returned_stack<-returned_data$parolees
-    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
+    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2))
     p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
       geom_bar(stat = "identity",position = "stack")+
       labs(x="Months",y="Count")
@@ -185,22 +185,29 @@ function(input, output) {
   output$graph1<-renderUI({
     returned_data<-rv$data
     returned_stack<-returned_data$parolees
-    stack<-data.frame(values=c(on_parole= returned_stack$on_parole,returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h3("Number in Parole/Prison"),p("It is sometimes assumed that because of high recidivism rates, that over the next few years the porportion number of prisoners on parole would grow smaller and smaller. However in reality it levels off after an initial drop resulting in about ",percent( returned_stack$on_parole[60]/1000),"on parole after 60 months. This can be explained by a low average number of rearrests. "))
+    stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
+    HTML(paste(h3("Number in Parole/Prison"),p("It is sometimes assumed that because of high recidivism rates, that over the next few years the porportion number of prisoners on parole would grow smaller and smaller. However in reality it levels off after an initial drop resulting in about ",
+                                               percent( returned_stack$on_parole[60]/1000),
+                                               "on parole after 60 months. This can be explained by a low average number of rearrests. ",
+                                               "The cost per Parolee per Year is ",
+                                               dollar((input$cost_per_yr*(1000-returned_stack$on_parole[1]))/1000),
+                                                "in the first month and ",
+                                                dollar((input$cost_per_yr*(1000-returned_stack$on_parole[60]))/1000),
+                                                "in the last month. "))
     )
   })
   
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,months=rep.int(1:60,2))
-    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likely hood they recidivate drops significantly.The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),"."))
+    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likely hood they recidivate drops significantly.The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to our simulation and the relativly low sample size."))
     )
   })
   
   output$graph3<-renderUI({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually released prisoners are not rearrested more than once or twice with "),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"only getting rearrested 1 or 2 times.This may only be in the 60 months however the chance for recidivism clearly lowers the longer one has been out of prison so these averages should hold for longer time periods. "))
+    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually parolees are not rearrested more than twice with"),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"only getting rearrested 1 or 2 times.This may only be in the 60 months however the chance for recidivism clearly lowers the longer one has been out of prison so these averages should hold for longer time periods. "))
     )
   })
 }

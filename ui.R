@@ -39,7 +39,10 @@ dashboardBody (
                   "Cost / Prisoner / Yr:", 
                   value = 30000,
                   min = 0, 
-                  max = 60000),
+                  max = 60000,
+                  pre = "$"),
+      
+      
       
       br(),
       
@@ -58,14 +61,8 @@ dashboardBody (
                            fluidRow(box(plotlyOutput("plot2")),
                                     box(htmlOutput("graph2"))),
                            fluidRow(box(plotlyOutput("plot3")),
-                                    box(htmlOutput("graph3")))
-
-                           
-                           
-),
-    
-                  tabPanel("Summary", verbatimTextOutput("summary")), 
-                  tabPanel("Table", tableOutput("table")))
+                                    box(htmlOutput("graph3")))),
+                  tabPanel("Data", tableOutput("table")))
       )
     )
   ))
