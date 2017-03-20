@@ -55,8 +55,10 @@ build_model <- function() {
     # This also collects arrest data
     for(month in 1:length(months_free_vector)){
       months_free <- calc_months_free(month, tmp.months_free)
+      
       # p(arrest | months free) based on national data
       rearrested <- calc_odds_of_being_rearrested(months_free)
+      
       # IF arrested, choose a random prison sentence from the prison_sample distribution
       tmp.months_free <- if_else(rearrested == 1, 
                                  round((sample(prison_sample, 1)) * -1), months_free)
