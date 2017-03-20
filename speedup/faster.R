@@ -20,31 +20,6 @@ prison_time_served <- 10
 prison_sample <- rlnorm(1000, log(prison_time_served))
 
 
-# If the agent is free, how many months has he or she been free
-calc_months_free <- function(m.month, m.prison_sentence, tmp.months_free) {
-  ifelse(m.month == 1, 1,
-         ifelse(m.prison_sentence > 1, 0,
-                tmp.months_free + 1))
-}
-
-
-
-
-
-calc_odds_of_being_rearrested <- function(month, months_free, survival_rates) {
- case_when(
-   month == 1 ~ sample(x = c(1, 0),
-                       size = 1,
-                       replace = FALSE,
-                       prob = c(survival_rates[1,])),
-   months_free <= 0 ~ 7,
-   month > 1 ~ sample(x = c(1, 0),
-                      size = 1,
-                      replace = FALSE,
-                      prob = c(survival_rates[months_free,]))
- )
-}
-
 
 # If the agent is free, how many months has he or she been free
 calc_months_free <- function(month, tmp.months_free){
@@ -69,3 +44,64 @@ for(month in 1:60){
   tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
   output[[month]] <- tmp.months_free
 }
+
+
+
+
+
+
+out <- vector("list", 1000)
+
+for (sim in 1:1000) {
+  output <- vector("double", 60)
+  for(month in 1:60){
+    months_free <- calc_months_free(month, tmp.months_free)
+    rearrested <- calc_odds_of_being_rearrested(months_free)
+    tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
+    output[[month]] <- tmp.months_free
+  }
+  
+  out[[sim]] <- output
+ 
+}
+
+test <- unlist(out)
+months <- rep(seq(1:60), 1000)
+id <- rep(1:1000, each=60)
+
+final <- tibble(test, months, id)
+
+
+
+
+ggplot(data=final,
+       aes(x=months, y=test, colour=id)) +
+  geom_line()
+
+
+
+
+
+
+
+
+
+
+
+
+sim_agent <- function(variables) {
+  output <- vector("double", 60)
+  for(month in 1:60){
+    months_free <- calc_months_free(month, tmp.months_free)
+    rearrested <- calc_odds_of_being_rearrested(months_free)
+    tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
+    output[[month]] <- tmp.months_free
+  }
+  return(output)
+}
+
+test <- sim_agent()
+
+walks <- replicate(1000, sim_agent())
+
+walkst <- t(walks)
