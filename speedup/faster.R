@@ -16,7 +16,7 @@ survival_rates <- matrix(c(prob_rec, 1-prob_rec), ncol = 2)
 
 
 # Prison time
-prison_time_served <- 10
+prison_time_served <- 10 # This is an input on the final model
 prison_sample <- rlnorm(1000, log(prison_time_served))
 
 
@@ -27,6 +27,7 @@ calc_months_free <- function(month, tmp.months_free){
 }
 
 
+# p(arrest | months free)
 calc_odds_of_being_rearrested <- function(months_free){
   ifelse(months_free <= 0, 0,
          sample(x = c(1, 0), 
@@ -36,87 +37,59 @@ calc_odds_of_being_rearrested <- function(months_free){
 }
 
 
-output <- vector("double", 60)
-
-for(month in 1:60){
-  months_free <- calc_months_free(month, tmp.months_free)
-  rearrested <- calc_odds_of_being_rearrested(months_free)
-  tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
-  output[[month]] <- tmp.months_free
-}
-
-
-
-
-
-
-out <- vector("list", 1000)
-numberOfArrests <- vector("double", 1000)
-
-for (sim in 1:1000) {
-  output <- vector("double", 60)
-  for(month in 1:60){
-    months_free <- calc_months_free(month, tmp.months_free)
-    rearrested <- calc_odds_of_being_rearrested(months_free)
-    tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
-    output[[month]] <- tmp.months_free
-    
-    numberOfArrests[sim]<-ifelse(rearrested==1,numberOfArrests[sim]+1,numberOfArrests[sim])
-  }
-  
-  out[[sim]] <- output
- 
-}
-
-test <- unlist(out)
-months <- rep(seq(1:60), 1000)
-id <- rep(1:1000, each=60)
-
-final <- tibble(test, months, id)
-
-
-
-
-ggplot(data=final,
-       aes(x=months, y=test, colour=id)) +
-  geom_line()
-
-
-
-
-
-
 
 
 build_model <- function() {
   
-  out <- vector("list", 1000)
+  # Initalize the outputs of the simulation for loop
+  simulations <- vector("list", 1000)
   numberOfArrests <- vector("double", 1000)
   
-  for (sim in 1:1000) {
-    output <- vector("double", 60)
-    for(month in 1:60){
+  for (sim in 1:length(simulations)) {
+    
+    # Initalize the outputs of the single simulation
+    months_free_vector <- vector("double", 60)
+    
+    # loop through 60 months building a "months free vector," 
+    # positive values represent freedom 
+    # This also collects arrest data
+    for(month in 1:length(months_free_vector)){
       months_free <- calc_months_free(month, tmp.months_free)
+      # p(arrest | months free) based on national data
       rearrested <- calc_odds_of_being_rearrested(months_free)
-      tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
-      output[[month]] <- tmp.months_free
+      # IF arrested, choose a random prison sentence from the prison_sample distribution
+      tmp.months_free <- if_else(rearrested == 1, 
+                                 round((sample(prison_sample, 1)) * -1), months_free)
       
-      numberOfArrests[sim]<-ifelse(rearrested==1,numberOfArrests[sim]+1,numberOfArrests[sim])
+      # Now add the months free and arrests to the right vectors
+      months_free_vector[[month]] <- tmp.months_free
+      numberOfArrests[sim]<-ifelse(rearrested==1, numberOfArrests[sim] + 1, 
+                                   numberOfArrests[sim])
     }
     
-    out[[sim]] <- output
+    # Add each simulation to a list 
+    simulations[[sim]] <- months_free_vector
     
   }
   
-  test <- unlist(out)
+  # Now use these variables to create a tidy tibble
+  months_free <- unlist(simulations)
   months <- rep(seq(1:60), 1000)
   id <- rep(1:1000, each=60)
+  free <- tibble(months_free, months, id)
   
-  final <- tibble(test, months, id)
+  # This is the data we share and base the in/out chart on
+  parolees <- free %>% 
+    group_by(months) %>% 
+    count(on_parole = sum(months_free > 0)) %>% 
+    mutate(prisoners = n - on_parole) %>% 
+    select(-n)
   
+  # The outputs
+  returns <- list(parolees = parolees, numberOfArrests = numberOfArrests)
   
 }
 
-tester <- build_model()
+free_df <- build_model()
 
 system.time(build_model())
