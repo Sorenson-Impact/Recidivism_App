@@ -51,6 +51,7 @@ for(month in 1:60){
 
 
 out <- vector("list", 1000)
+numberOfArrests <- vector("double", 1000)
 
 for (sim in 1:1000) {
   output <- vector("double", 60)
@@ -59,6 +60,8 @@ for (sim in 1:1000) {
     rearrested <- calc_odds_of_being_rearrested(months_free)
     tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
     output[[month]] <- tmp.months_free
+    
+    numberOfArrests[sim]<-ifelse(rearrested==1,numberOfArrests[sim]+1,numberOfArrests[sim])
   }
   
   out[[sim]] <- output
@@ -85,23 +88,35 @@ ggplot(data=final,
 
 
 
-
-
-
-
-sim_agent <- function(variables) {
-  output <- vector("double", 60)
-  for(month in 1:60){
-    months_free <- calc_months_free(month, tmp.months_free)
-    rearrested <- calc_odds_of_being_rearrested(months_free)
-    tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
-    output[[month]] <- tmp.months_free
+build_model <- function() {
+  
+  out <- vector("list", 1000)
+  numberOfArrests <- vector("double", 1000)
+  
+  for (sim in 1:1000) {
+    output <- vector("double", 60)
+    for(month in 1:60){
+      months_free <- calc_months_free(month, tmp.months_free)
+      rearrested <- calc_odds_of_being_rearrested(months_free)
+      tmp.months_free <- if_else(rearrested == 1, round((sample(prison_sample, 1)) * -1), months_free) 
+      output[[month]] <- tmp.months_free
+      
+      numberOfArrests[sim]<-ifelse(rearrested==1,numberOfArrests[sim]+1,numberOfArrests[sim])
+    }
+    
+    out[[sim]] <- output
+    
   }
-  return(output)
+  
+  test <- unlist(out)
+  months <- rep(seq(1:60), 1000)
+  id <- rep(1:1000, each=60)
+  
+  final <- tibble(test, months, id)
+  
+  
 }
 
-test <- sim_agent()
+tester <- build_model()
 
-walks <- replicate(1000, sim_agent())
-
-walkst <- t(walks)
+system.time(build_model())
