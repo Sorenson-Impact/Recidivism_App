@@ -1,9 +1,12 @@
 library(shiny)
 library(expm)
 library(ggplot2)
-library(riverplot)
 library(RColorBrewer)
 library(plotly)
+library(tibble)
+library(plyr)
+library(dplyr)
+library(tidyr)
 
 default_data <- read.csv("./default_data.csv")
 default_arrests<-read.csv("./default_arrests.csv")
@@ -28,57 +31,85 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
  prob_rec<-round(recid_rates$recid,digits = 3)
   
   survival_rates <- matrix(c(prob_rec, 1-prob_rec), ncol = 2)
+
   
-  number_in_prison <- rep(0,60)
-  number_released<-rep(0,60)
-  number_rearrested<-rep(0,60)
   
-  # Made this a log normal becuse the long tail seems to capture the gap between
-  # Mean and Median in actual BJS data
-  # The log of the mean = the median for the actual data generated
-  prison_sample <- rlnorm(1000, log(prison_time_served))
-  numberOfArrests<-c(rep.int(0,times = 1000))
-  first_arrests<-c(rep.int(0,times = 60))
+  # Initalize the outputs of the simulation for loop
+  simulations <- vector("list", 1000)
+  numberOfArrests <- vector("double", 1000)
   
-  for (i in 1:1000){
-    prison_time=0
-    df <- data.frame(month=numeric(0),
-                   months_free=numeric(0),
-                   is_in_prison=numeric(0),
-                   rearrested=numeric(0),
-                   released=numeric(0))
-    for (month in 1:60){
-      m.month<-month
-      m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
-      m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
-      numberOfArrests[i]<-ifelse(m.rearrested==1,numberOfArrests[i]+1,numberOfArrests[i])
-      first_arrests[month]<-ifelse(m.rearrested==1 & numberOfArrests[i]==1,first_arrests[month]+1,first_arrests[month])
-      prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
-      m.released<-ifelse(prison_time==1,1,0)
-      m.is_in_prison<-say_if_in_prison(prison_time)
-      prison_time<-ifelse(m.is_in_prison==1,prison_time-1,prison_time)
-      tmp.months_free <- ifelse(m.rearrested == 1, 0, m.months_free)
-      df[month,]<-c(m.month,m.months_free,m.is_in_prison,m.rearrested,m.released)
+  
+  for(sim in 1:length(simulations)){
+    # Initalize the outputs of the single simulation
+    tmp.months_free<-0;
+    months_free_vector <- vector("double", 60)
+
+    for (month in 1:length(months_free_vector)){
+     
+      months_free <- calc_months_free(month, tmp.months_free)
+      # p(arrest | months free) based on national data
+      rearrested <- calc_odds_of_being_rearrested(months_free,survival_rates)
+      # IF arrested, choose a random prison sentence from the prison_sample distribution
+      tmp.months_free <- ifelse(rearrested == 1, 
+                                 round((sample(prison_sample, 1)) * -1), months_free)
+      # Now add the months free and arrests to the right vectors
+      months_free_vector[[month]] <- tmp.months_free
+      numberOfArrests[sim]<-ifelse(rearrested==1, numberOfArrests[sim] + 1, 
+                                   numberOfArrests[sim])
+      
+      # m.month<-month
+      #m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
+      #m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
+      #numberOfArrests[i]<-ifelse(m.rearrested==1,numberOfArrests[i]+1,numberOfArrests[i])
+      #first_arrests[month]<-ifelse(m.rearrested==1 & numberOfArrests[i]==1,first_arrests[month]+1,first_arrests[month])
+      #prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
+      #m.released<-ifelse(prison_time==1,1,0)
+      #m.is_in_prison<-say_if_in_prison(prison_time)
+      #prison_time<-ifelse(m.is_in_prison==1,prison_time-1,prison_time)
+      #tmp.months_free <- ifelse(m.rearrested == 1, 0, m.months_free)
+      #df[month,]<-c(m.month,m.months_free,m.is_in_prison,m.rearrested,m.released)
       
     }
-    single_agent_prison_time<-df$is_in_prison
-    released_by_month<-df$released
-    rearrested_by_month<-df$rearrested
-    number_in_prison<-number_in_prison+as.numeric(single_agent_prison_time)
-    number_released<-number_released+as.numeric(released_by_month)
-    number_rearrested <-number_rearrested+as.numeric(rearrested_by_month)
+    
+    # Add each simulation to a list   
+    simulations[[sim]] <- months_free_vector
+
     
     # If we were passed a progress update function, call it
     if (is.function(updateProgress)) {
-      text <- paste0("Simulation:", i, "/1,000")
-      updateProgress(detail = text, value = i/1000)
+      text <- paste0("Simulation:", sim, "/1,000")
+      updateProgress(detail = text, value = sim/1000)
     }
     
+    
   }
-  parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates, released=number_released,rearrested=number_rearrested)
-  returns<-list(parolees=parolees,arrested=numberOfArrests,rates=first_arrests)
-  return(returns)
+  
+  # Now use these variables to create a tidy tibble
+  months_free <- unlist(simulations)
+  months <- rep(seq(1:60), 1000)
+  id <- rep(1:1000, each=60)
+  free <- tibble(months_free, months, id)
+  
+  # This is the data we share and base the in/out chart on
+  parolees <- free %>% 
+    group_by(months) %>% 
+    count(on_parole = sum(months_free > 0)) %>% 
+    mutate(prisoners = n - on_parole) %>% 
+    select(-n)
+  
+  # The outputs
+  returns <- list(parolees = parolees, arrested = numberOfArrests,rates=cumu_prob_recid)
+  
+#  parolees<-data.frame(months=c(1:60),on_parole=1000-number_in_prison,prisoners=number_in_prison, survival_rates = survival_rates, released=number_released,rearrested=number_rearrested)
+ # returns<-list(parolees=parolees,arrested=numberOfArrests,rates=first_arrests)
+  #return(returns)
 }
+
+# Prison time
+prison_time_served <- 10 # This is an input on the final model
+prison_sample <- rlnorm(1000, log(prison_time_served))
+
+
 
 
 # Simply for summing later and helping with cost functions below
@@ -87,19 +118,17 @@ say_if_in_prison <- function(m.prison_sentence) {
 }
 
 # If the agent is free, how many months has he or she been free
-calc_months_free <- function(m.month, m.prison_sentence, tmp.months_free) {
-  ifelse(m.month == 1, 1,
-         ifelse(m.prison_sentence > 1, 0,
-                tmp.months_free + 1))
+calc_months_free <- function(month, tmp.months_free){
+  ifelse(month == 1, 1, tmp.months_free + 1)
 }
 
-# Taking the survival analysis data from national trends, this will calculate the odds of being rearrested conditional on the number of months he or she has been free
-calc_odds_of_being_rearrested <- function(m.months_free,survival_rates) {
-  ifelse(m.months_free == 0, 0,
+# p(arrest | months free)
+calc_odds_of_being_rearrested <- function(months_free,survival_rates){
+  ifelse(months_free <= 0, 0,
          sample(x = c(1, 0), 
                 size = 1, 
                 replace = FALSE, 
-                prob = c(survival_rates[m.months_free,])))
+                prob = c(survival_rates[months_free,])))
 }
 
 
@@ -153,7 +182,7 @@ function(input, output) {
   
   output$plot2<- renderPlotly({
     returned_data<-rv$data
-    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,Month=rep.int(1:60,2))
+    returned_rates<-data.frame(Recidivated=(returned_data$rates)/1000,Month=rep.int(1:60,2))
     p<-ggplot(returned_rates,aes(x=Month))+
     geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
     labs(x="Months",y="% Recidivated", colour="Status")
@@ -211,3 +240,4 @@ function(input, output) {
     )
   })
 }
+
