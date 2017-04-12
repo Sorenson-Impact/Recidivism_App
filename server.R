@@ -33,6 +33,12 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   survival_rates <- matrix(c(prob_rec, 1-prob_rec), ncol = 2)
 
   
+  # Prison time
+  #prison_time_served <- prison_time # This is an input on the final model
+  prison_sample <- rlnorm(1000, log(prison_time_served))
+  
+  
+  
   
   # Initalize the outputs of the simulation for loop
   simulations <- vector("list", 1000)
@@ -104,10 +110,6 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
  # returns<-list(parolees=parolees,arrested=numberOfArrests,rates=first_arrests)
   #return(returns)
 }
-
-# Prison time
-prison_time_served <- 10 # This is an input on the final model
-prison_sample <- rlnorm(1000, log(prison_time_served))
 
 
 
@@ -182,11 +184,11 @@ function(input, output) {
   
   output$plot2<- renderPlotly({
     returned_data<-rv$data
-    returned_rates<-data.frame(Recidivated=(returned_data$rates)/1000,Month=rep.int(1:60,2))
+    returned_rates<-data.frame(Recidivated=(returned_data$rates),Month=rep.int(1:60,2))
     p<-ggplot(returned_rates,aes(x=Month))+
     geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
     labs(x="Months",y="% Recidivated", colour="Status")
-    
+    print(returned_data$rates)
     ggplotly(p)
   })
   
@@ -199,14 +201,7 @@ function(input, output) {
   })
   
   # Generate a summary of the data
-  output$summary <- renderText({
-    data<-rv$data
-    summary(data$parolees)
-    
-  })
-  
-  # Generate an HTML table view of the data
-  output$table <- renderTable({
+  outp  able <- renderTable({
     returned_data<-rv$data
     data.frame(x=returned_data$parolees)
   })
@@ -228,7 +223,7 @@ function(input, output) {
   
   output$graph2<-renderUI({
     returned_data<-rv$data
-    returned_rates<-data.frame(Recidivated=cumsum(returned_data$rates)/1000,months=rep.int(1:60,2))
+    returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
     HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likely hood they recidivate drops significantly.The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to our simulation and the relativly low sample size."))
     )
   })

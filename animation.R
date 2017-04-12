@@ -8,7 +8,7 @@ library(gganimate)
 library(tweenr)
 
 ani.options(convert="c:program files/imagemagick/convert.exe")
-sample<-read.csv("C:/Users/samma/OneDrive/Documents/test3.csv")
+sample<-read.csv("test3.csv")
 splitSample<-split(sample,sample$month)
 tween<-tween_states(splitSample,tweenlength = 2,statelength = 1 ,
                     ease= c('sine-in-out'),
