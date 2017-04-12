@@ -1,3 +1,5 @@
+#writen by Samuel Nelson in 2017
+
 library(animation)
 library(ggplot2)
 library(gganimate)

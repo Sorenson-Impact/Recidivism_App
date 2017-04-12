@@ -1,3 +1,5 @@
+
+#written by Samuel Nelson and Daniel Hadley in 2016-2017
 library(shiny)
 library(scales)
 library(plotly)

@@ -1,3 +1,6 @@
+
+#written by Samuel Nelson and Daniel Hadley in 2016-2017
+
 library(shiny)
 library(expm)
 library(ggplot2)
