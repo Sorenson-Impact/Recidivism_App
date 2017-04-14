@@ -191,7 +191,7 @@ function(input, output) {
     p<-ggplot(returned_rates,aes(x=Month))+
     geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
     labs(x="Months",y="% Recidivated", colour="Status")
-    print(returned_data$rates)
+   # print(returned_data$rates)
     ggplotly(p)
   })
   
@@ -204,7 +204,7 @@ function(input, output) {
   })
   
   # Generate a summary of the data
-  outp  able <- renderTable({
+  output$table <- renderTable({
     returned_data<-rv$data
     data.frame(x=returned_data$parolees)
   })
