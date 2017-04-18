@@ -57,19 +57,15 @@ material_page(
     # of the generated distribution
     material_column(
       width = 9,
-      tabsetPanel(type = "tabs", 
-                  tabPanel("Plot", 
-                           fluidRow(box(width=5, htmlOutput("graph1")),
-                                    box(width=7, plotlyOutput("plot"))
-                                    ),
-                           fluidRow(box(htmlOutput("graph2")),
-                                    box(plotlyOutput("plot2"))
-                                    ),
-                           fluidRow(box(htmlOutput("graph3")),
-                                    box(plotlyOutput("plot3"))
-                                    )
-                           ),
-                  tabPanel("Data", tableOutput("table")))
+      fluidRow(box(width=5, htmlOutput("graph1")),
+               box(width=7, plotlyOutput("plot"))
+      ),
+      fluidRow(box(htmlOutput("graph2")),
+               box(plotlyOutput("plot2"))
+      ),
+      fluidRow(box(htmlOutput("graph3")),
+               box(plotlyOutput("plot3"))
+      )
       )
     )
   )
