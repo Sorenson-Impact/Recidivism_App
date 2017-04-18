@@ -24,9 +24,11 @@ material_page(
       box(width=12, p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
       sliderInput("recid_rate", 
                   "5-yr Recidivism Rate:", 
-                  value = .55,
+                  value = 55,
                   min = 0, 
-                  max = 1),
+                  max = 100,
+                  post = "%"),
+      
       br(),
       
       sliderInput("prison_time_served", 

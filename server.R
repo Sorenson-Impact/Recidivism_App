@@ -19,13 +19,11 @@ default_recid<-read.csv("./default_recid_rates.csv")
 #values used from rpts05p0510f01.csv which has national recidivism trends
 cumu_prob_recid<-c(0.0231,	0.0493,	0.0827,	0.1147,	0.1479,	0.1764,	0.2019,	0.2245,	0.2487,	0.2678,	0.2859,	0.3041,	0.3214,	0.3358,	0.3484,	0.361,	0.3723,	0.3835,	0.3928,	0.4009,	0.4092,	0.4169,	0.4248,	0.4328,	0.4403,	0.446,	0.453,	0.4588,	0.4642,	0.4694,	0.4745,	0.4794,	0.4836,	0.4878,	0.4921,	0.4966,	0.5004,	0.5037,	0.5069,	0.5096,	0.5121,	0.5149,	0.5173,	0.5194,	0.522,	0.5242,	0.5263,	0.5288,	0.5307,	0.533,	0.535,	0.5371,	0.5394,	0.541,	0.5425,	0.5443,	0.5465,	0.5479,	0.5495,	0.5511)
 
-# survival_rates<-matrix(c(recid,1-recid),ncol=2)
-
 
 build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # This is the matrix for calculating the prob of recidivating 
   # We adjust by dividing the rate selected by the 5-year rate used for this data:
-  cumu_prob_recid<-cumu_prob_recid*(recid_rate/.551)
+  cumu_prob_recid<-cumu_prob_recid*((recid_rate/100)/.551)
   #the next four lines replicate the procdure used in analyze_recidivism 
   #to replicate recidivism trends based on national trends
  recid_rates<-data.frame(cumu_prob_not_recid=1-cumu_prob_recid) 
@@ -66,17 +64,6 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
       numberOfArrests[sim]<-ifelse(rearrested==1, numberOfArrests[sim] + 1, 
                                    numberOfArrests[sim])
       
-      # m.month<-month
-      #m.months_free<-calc_months_free(m.month,prison_time,tmp.months_free)
-      #m.rearrested<-calc_odds_of_being_rearrested(m.months_free,survival_rates)
-      #numberOfArrests[i]<-ifelse(m.rearrested==1,numberOfArrests[i]+1,numberOfArrests[i])
-      #first_arrests[month]<-ifelse(m.rearrested==1 & numberOfArrests[i]==1,first_arrests[month]+1,first_arrests[month])
-      #prison_time<-ifelse(m.rearrested==1,round(sample(prison_sample,1)),prison_time)
-      #m.released<-ifelse(prison_time==1,1,0)
-      #m.is_in_prison<-say_if_in_prison(prison_time)
-      #prison_time<-ifelse(m.is_in_prison==1,prison_time-1,prison_time)
-      #tmp.months_free <- ifelse(m.rearrested == 1, 0, m.months_free)
-      #df[month,]<-c(m.month,m.months_free,m.is_in_prison,m.rearrested,m.released)
       
     }
     
@@ -213,9 +200,9 @@ function(input, output) {
     returned_data<-rv$data
     returned_stack<-returned_data$parolees
     stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h3("Number in Parole/Prison"),p("It is sometimes assumed that because of high recidivism rates, that over the next few years the porportion number of prisoners on parole would grow smaller and smaller. However in reality it levels off after an initial drop resulting in about ",
-                                               percent( returned_stack$on_parole[60]/1000),
-                                               "on parole after 60 months. This can be explained by a low average number of rearrests. ",
+    HTML(paste(h3("In Prison vs on Parole"),p("This app simulates 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners that levels off over time to an average of ",
+                                               percent( 1 - returned_stack$on_parole[60]/1000),
+                                               "in prison by month 60. ",
                                                "The cost per Parolee per Year is ",
                                                dollar((input$cost_per_yr*(1000-returned_stack$on_parole[1]))/1000),
                                                 "in the first month and ",
@@ -227,14 +214,14 @@ function(input, output) {
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
-    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likely hood they recidivate drops significantly.The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to our simulation and the relativly low sample size."))
+    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likeliehood they recidivate drops significantly. The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to the stochastic nature of our simulation."))
     )
   })
   
   output$graph3<-renderUI({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually parolees are not rearrested more than twice with"),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"only getting rearrested 1 or 2 times.This may only be in the 60 months however the chance for recidivism clearly lowers the longer one has been out of prison so these averages should hold for longer time periods. "))
+    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually parolees are not rearrested more than twice. In this simulation"),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"were arrested fewer than three times within 60 months. "))
     )
   })
 }
