@@ -200,7 +200,7 @@ function(input, output) {
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
     stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h3("In Prison vs. on Parole"),p("This app simulates 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
+    HTML(paste(h3("In Prison vs. on Parole"),p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
                                                percent(round(1 - returned_stack$on_parole[60]/1000, 2)),
                                                "in prison.",
                                                "At the given cost per prisoner per year, the average cost to the system is",
@@ -214,7 +214,7 @@ function(input, output) {
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
-    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likeliehood they recidivate drops significantly. The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". (The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to the stochastic nature of our simulation)."))
+    HTML(paste(h3("Recidivism Rates"), p(paste("As described above, most who recidivate will do so within the first several months, after which the recidivism rate drops significantly. In the first 30 months, approximately "), percent(returned_rates$Recidivated[30])," will have returned at least once. In the remaining 30 months, only an additional ", percent(returned_rates$Recidivated[60] - (returned_rates$Recidivated[30])),"will return for the first time."))
     )
   })
   
