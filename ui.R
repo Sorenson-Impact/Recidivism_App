@@ -32,10 +32,10 @@ material_page(
       br(),
       
       sliderInput("prison_time_served", 
-                  "Median Prison Sentence (months):", 
-                  value = 16,
+                  "Average Prison Sentence (months):", 
+                  value = 37,
                   min = 1, 
-                  max = 60),
+                  max = 120),
       
       br(),
       

@@ -35,8 +35,15 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
 
   
   # Prison time
-  #prison_time_served <- prison_time # This is an input on the final model
-  prison_sample <- rlnorm(1000, log(prison_time_served))
+  # I am using an exponential function here because it seems to capture the difference between
+  # the mean and median prison sentence for prisoners in US national data
+  # For instance, the mean is 37.5 while the median is 25.3. rexp returns something similar, 
+  # if slightly off
+  # Overall, it captures the skew in the data caused by the
+  # fact that most people have relatively short sentences,
+  # while some are in for murder
+  # Table 7.11 here: https://www.bjs.gov/index.cfm?ty=pbdetail&iid=5874
+  prison_sample <- rexp(1000, 1/prison_time_served)
   
   
   
