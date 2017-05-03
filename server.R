@@ -12,24 +12,24 @@ library(dplyr)
 library(tidyr)
 
 default_data <- read.csv("./default_data.csv")
-default_arrests<-read.csv("./default_arrests.csv")
-default_recid<-read.csv("./default_recid_rates.csv")
+default_arrests <-read.csv("./default_arrests.csv")
+default_recid <-read.csv("./default_recid_rates.csv")
 
 # This is a vector of the probability of recidivating given months free (i)
 #values used from rpts05p0510f01.csv which has national recidivism trends
-cumu_prob_recid<-c(0.0231,	0.0493,	0.0827,	0.1147,	0.1479,	0.1764,	0.2019,	0.2245,	0.2487,	0.2678,	0.2859,	0.3041,	0.3214,	0.3358,	0.3484,	0.361,	0.3723,	0.3835,	0.3928,	0.4009,	0.4092,	0.4169,	0.4248,	0.4328,	0.4403,	0.446,	0.453,	0.4588,	0.4642,	0.4694,	0.4745,	0.4794,	0.4836,	0.4878,	0.4921,	0.4966,	0.5004,	0.5037,	0.5069,	0.5096,	0.5121,	0.5149,	0.5173,	0.5194,	0.522,	0.5242,	0.5263,	0.5288,	0.5307,	0.533,	0.535,	0.5371,	0.5394,	0.541,	0.5425,	0.5443,	0.5465,	0.5479,	0.5495,	0.5511)
+cumu_prob_recid <-c(0.0231,	0.0493,	0.0827,	0.1147,	0.1479,	0.1764,	0.2019,	0.2245,	0.2487,	0.2678,	0.2859,	0.3041,	0.3214,	0.3358,	0.3484,	0.361,	0.3723,	0.3835,	0.3928,	0.4009,	0.4092,	0.4169,	0.4248,	0.4328,	0.4403,	0.446,	0.453,	0.4588,	0.4642,	0.4694,	0.4745,	0.4794,	0.4836,	0.4878,	0.4921,	0.4966,	0.5004,	0.5037,	0.5069,	0.5096,	0.5121,	0.5149,	0.5173,	0.5194,	0.522,	0.5242,	0.5263,	0.5288,	0.5307,	0.533,	0.535,	0.5371,	0.5394,	0.541,	0.5425,	0.5443,	0.5465,	0.5479,	0.5495,	0.5511)
 
 
 build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
   # This is the matrix for calculating the prob of recidivating 
   # We adjust by dividing the rate selected by the 5-year rate used for this data:
-  cumu_prob_recid<-cumu_prob_recid*((recid_rate/100)/.551)
+  cumu_prob_recid <- cumu_prob_recid*((recid_rate/100)/.551)
   #the next four lines replicate the procdure used in analyze_recidivism 
   #to replicate recidivism trends based on national trends
- recid_rates<-data.frame(cumu_prob_not_recid=1-cumu_prob_recid) 
- recid_rates<-recid_rates%>%mutate(recid=1-cumu_prob_not_recid/lag(cumu_prob_not_recid))
- recid_rates$recid[1]=1-recid_rates$cumu_prob_not_recid[1]
- prob_rec<-round(recid_rates$recid,digits = 3)
+ recid_rates <- data.frame(cumu_prob_not_recid=1-cumu_prob_recid) 
+ recid_rates <- recid_rates%>%mutate(recid=1-cumu_prob_not_recid/lag(cumu_prob_not_recid))
+ recid_rates$recid[1] = 1-recid_rates$cumu_prob_not_recid[1]
+ prob_rec <- round(recid_rates$recid,digits = 3)
   
   survival_rates <- matrix(c(prob_rec, 1-prob_rec), ncol = 2)
 
@@ -61,7 +61,7 @@ build_model <- function(recid_rate, prison_time_served, updateProgress = NULL){
                                  round((sample(prison_sample, 1)) * -1), months_free)
       # Now add the months free and arrests to the right vectors
       months_free_vector[[month]] <- tmp.months_free
-      numberOfArrests[sim]<-ifelse(rearrested==1, numberOfArrests[sim] + 1, 
+      numberOfArrests[sim] <- ifelse(rearrested==1, numberOfArrests[sim] + 1, 
                                    numberOfArrests[sim])
       
       
@@ -128,7 +128,7 @@ calc_odds_of_being_rearrested <- function(months_free,survival_rates){
 
 # Define server logic for random distribution application
 function(input, output) {
-  default_list<-list(parolees=default_data,arrested=default_arrests,rates=default_recid)
+  default_list <- list(parolees=default_data,arrested=default_arrests,rates=default_recid)
   # Loads default data
   rv<-reactiveValues(data=default_list)
   
@@ -162,8 +162,8 @@ function(input, output) {
 
    #Generate a plot of the data. Also uses the inputs to build
   output$plot <- renderPlotly({
-    returned_data<-rv$data
-    returned_stack<-returned_data$parolees
+    returned_data <- rv$data
+    returned_stack <- returned_data$parolees
     stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2))
     p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
       geom_bar(stat = "identity",position = "stack")+
@@ -172,9 +172,9 @@ function(input, output) {
     
   })
   
-  output$plot2<- renderPlotly({
-    returned_data<-rv$data
-    returned_rates<-data.frame(Recidivated=(returned_data$rates),Month=rep.int(1:60,2))
+  output$plot2 <- renderPlotly({
+    returned_data <- rv$data
+    returned_rates <- data.frame(Recidivated=(returned_data$rates),Month=rep.int(1:60,2))
     p<-ggplot(returned_rates,aes(x=Month))+
     geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
     labs(x="Months",y="% Recidivated", colour="Status")
@@ -182,9 +182,9 @@ function(input, output) {
     ggplotly(p)
   })
   
-  output$plot3<-renderPlotly({
-    returned_data<-rv$data
-    returned_arrests<-data.frame(Arrests=returned_data$arrested)
+  output$plot3 <- renderPlotly({
+    returned_data <- rv$data
+    returned_arrests <- data.frame(Arrests=returned_data$arrested)
     p<-ggplot(returned_arrests,aes(x= Arrests))+geom_histogram(binwidth = 1)+
     labs(x="Number of Arrests in 60 months",y="Count")
     ggplotly(p)
@@ -192,36 +192,36 @@ function(input, output) {
   
   # Generate a summary of the data
   output$table <- renderTable({
-    returned_data<-rv$data
+    returned_data <- rv$data
     data.frame(x=returned_data$parolees)
   })
 
   output$graph1<-renderUI({
-    returned_data<-rv$data
-    returned_stack<-returned_data$parolees
+    returned_data <- rv$data
+    returned_stack <- returned_data$parolees
     stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h3("In Prison vs on Parole"),p("This app simulates 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners that levels off over time to an average of ",
-                                               percent( 1 - returned_stack$on_parole[60]/1000),
-                                               "in prison by month 60. ",
-                                               "The cost per Parolee per Year is ",
-                                               dollar((input$cost_per_yr*(1000-returned_stack$on_parole[1]))/1000),
+    HTML(paste(h3("In Prison vs. on Parole"),p("This app simulates 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
+                                               percent(round(1 - returned_stack$on_parole[60]/1000, 2)),
+                                               "in prison.",
+                                               "At the given cost per prisoner per year, the average cost to the system is",
+                                               dollar((input$cost_per_yr*(1000 - returned_stack$on_parole[1])/12)),
                                                 "in the first month and ",
-                                                dollar((input$cost_per_yr*(1000-returned_stack$on_parole[60]))/1000),
-                                                "in the last month. "))
+                                               dollar((input$cost_per_yr*(1000 - returned_stack$on_parole[60])/12)),
+                                                "in the last month (prisoners * cost / 12)."))
     )
   })
   
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
-    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likeliehood they recidivate drops significantly. The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to the stochastic nature of our simulation."))
+    HTML(paste(h3("Recidivism Rates"), p(paste("Most released prisoners that recidivate will return within the first few years, after which the likeliehood they recidivate drops significantly. The percentage of released prisoners that have recidivated within 36 months is"),percent( returned_rates$Recidivated[36]),". (The cumulative percentage in the 60th month may be slightly off from the given 5 Year Recidivism Rate due to the stochastic nature of our simulation)."))
     )
   })
   
   output$graph3<-renderUI({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    HTML(paste(h3("Number of Arrests per Person"), p(paste("Usually parolees are not rearrested more than twice. In this simulation"),percent(length(which(returned_arrests>0 & returned_arrests<3))/length(which(returned_arrests>0))),"were arrested fewer than three times within 60 months. "))
+    HTML(paste(h3("Number of Arrests per Person"), p(paste("Unfortunately, it is common for parolees to be rearrested more than once. In this simulation,"),percent(round(length(which(returned_arrests > 1))/1000,2)),"were arrested 2 or more times within 60 months."))
     )
   })
 }
