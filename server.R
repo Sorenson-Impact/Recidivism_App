@@ -207,7 +207,7 @@ function(input, output) {
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
     stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h3("In Prison vs. on Parole"),p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
+    HTML(paste(p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
                                                percent(round(1 - returned_stack$on_parole[60]/1000, 2)),
                                                "in prison.",
                                                "At the given cost per prisoner per year, the average cost to the system is",
@@ -221,14 +221,14 @@ function(input, output) {
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
-    HTML(paste(h3("Recidivism Rates"), p(paste("As described above, most who recidivate will do so within the first several months, after which the recidivism rate drops significantly. In the first 30 months, approximately "), percent(returned_rates$Recidivated[30])," will have returned at least once. In the remaining 30 months, only an additional ", percent(returned_rates$Recidivated[60] - (returned_rates$Recidivated[30])),"will return for the first time."))
+    HTML(paste(h4("Recidivism Rates"), p(paste("As described above, most who recidivate will do so within the first several months, after which the recidivism rate drops significantly. In the first 30 months, approximately "), percent(returned_rates$Recidivated[30])," will have returned at least once. In the remaining 30 months, only an additional ", percent(returned_rates$Recidivated[60] - (returned_rates$Recidivated[30])),"will return for the first time."))
     )
   })
   
   output$graph3<-renderUI({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    HTML(paste(h3("Number of Arrests per Person"), p(paste("Unfortunately, it is common for parolees to be rearrested more than once. In this simulation,"),percent(round(length(which(returned_arrests > 1))/1000,2)),"were arrested 2 or more times within 60 months."))
+    HTML(paste(h4("Number of Arrests per Person"), p(paste("Unfortunately, it is common for parolees to be rearrested more than once. In this simulation,"),percent(round(length(which(returned_arrests > 1))/1000,2)),"were arrested 2 or more times within 60 months."))
     )
   })
 }
