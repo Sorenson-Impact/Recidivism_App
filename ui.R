@@ -4,24 +4,23 @@
 library(shiny)
 library(scales)
 library(plotly)
-library(shinymaterial)
+library(shinythemes)
 # Define UI for random distribution application 
 
 
 
-material_page(
+fluidPage(
   
-  title = "RecidiViz: Analyzing Reincarceration",
+  theme = shinytheme("flatly"),
 
 
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the
   # br() element to introduce extra vertical spacing
-  material_row(
-    material_column(
-      width = 3,
-      h5("About this App"),
-      box(width=12, p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices",     href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
+  fluidRow(
+    column(3,
+           h5("About this App"),
+           box(width=12, p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices", href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
       sliderInput("recid_rate", 
                   "5-yr Recidivism Rate:", 
                   value = 55,
@@ -57,16 +56,16 @@ material_page(
       
     # Show a tabset that includes a plot, summary, and table view
     # of the generated distribution
-    material_column(
+    column(
       width = 9,
-      fluidRow(box(width=5, htmlOutput("graph1")),
-               box(width=7, plotlyOutput("plot"))
+      fluidRow(htmlOutput("graph1"),
+               plotlyOutput("plot")
       ),
-      fluidRow(box(htmlOutput("graph2")),
-               box(plotlyOutput("plot2"))
+      fluidRow(htmlOutput("graph2"),
+               plotlyOutput("plot2")
       ),
-      fluidRow(box(htmlOutput("graph3")),
-               box(plotlyOutput("plot3"))
+      fluidRow(htmlOutput("graph3"),
+               plotlyOutput("plot3")
       )
       )
     )

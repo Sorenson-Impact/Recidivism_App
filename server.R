@@ -7,7 +7,7 @@ library(ggplot2)
 library(RColorBrewer)
 library(plotly)
 library(tibble)
-library(plyr)
+# library(plyr)
 library(dplyr)
 library(tidyr)
 
