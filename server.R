@@ -226,7 +226,7 @@ function(input, output) {
   output$graph2<-renderUI({
     returned_data<-rv$data
     returned_rates<-data.frame(Recidivated=returned_data$rates,months=rep.int(1:60,2))
-    HTML(paste(h4("Recidivism Rates"), p(paste("As described above, most who recidivate will do so within the first several months, after which the recidivism rate drops significantly. In the first 30 months, approximately "), percent(returned_rates$Recidivated[30])," will have returned at least once. In the remaining 30 months, only an additional ", percent(returned_rates$Recidivated[60] - (returned_rates$Recidivated[30])),"will return for the first time."))
+    HTML(paste(h4("Recidivism Rate"), p(paste("As described above, most who recidivate will do so within the first several months, after which the recidivism rate drops significantly. In the first 30 months, approximately "), percent(returned_rates$Recidivated[30])," will have returned at least once. In the remaining 30 months, only an additional ", percent(returned_rates$Recidivated[60] - (returned_rates$Recidivated[30])),"will return for the first time."))
     )
   })
   
