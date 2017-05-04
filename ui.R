@@ -12,6 +12,8 @@ library(shinythemes)
 fluidPage(
   
   theme = shinytheme("flatly"),
+  
+  titlePanel("RecidiViz: Analyzing Reincarceration"),
 
 
   # Sidebar with controls to select the random distribution type
@@ -19,8 +21,6 @@ fluidPage(
   # br() element to introduce extra vertical spacing
   fluidRow(
     column(3,
-           h5("About this App"),
-           box(width=12, p("Recidivism is one of society's most persistent, yet misunderstood, problems. Everyone from politicians to", a("Supreme Court Justices", href= "https://www.themarshallproject.org/2014/12/04/the-misleading-math-of-recidivism#.AQSpHMFig"), "seem to get it wrong.")),
       sliderInput("recid_rate", 
                   "5-yr Recidivism Rate:", 
                   value = 55,
@@ -54,10 +54,9 @@ fluidPage(
     ),
     
       
-    # Show a tabset that includes a plot, summary, and table view
     # of the generated distribution
     column(
-      width = 9,
+      width = 8,
       fluidRow(htmlOutput("graph1"),
                plotlyOutput("plot")
       ),

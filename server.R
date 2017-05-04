@@ -172,9 +172,10 @@ function(input, output) {
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
     stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2))
-    p<-ggplot(stack, aes(x = months, y = values,fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
+    p<-ggplot(stack, aes(x = months, y = values, fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
       geom_bar(stat = "identity",position = "stack")+
-      labs(x="Months",y="Count")
+      labs(x="Months",y="Count") +
+      scale_fill_manual(values=c("#999999", "#bad80a"))
     ggplotly(p,tooltip = "text")
     
   })
@@ -192,8 +193,12 @@ function(input, output) {
   output$plot3 <- renderPlotly({
     returned_data <- rv$data
     returned_arrests <- data.frame(Arrests=returned_data$arrested)
-    p<-ggplot(returned_arrests,aes(x= Arrests))+geom_histogram(binwidth = 1)+
-    labs(x="Number of Arrests in 60 months",y="Count")
+    p <- returned_arrests %>% 
+      group_by(Arrests) %>% 
+      tally() %>% 
+      ggplot(aes(x= Arrests, y = n)) + 
+      geom_bar(stat = "identity") +
+      labs(x="Number of Arrests in 60 months",y="Count")
     ggplotly(p)
   })
   
@@ -207,7 +212,7 @@ function(input, output) {
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
     stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
+    HTML(paste(h4("In Prison vs. On Parole"), p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
                                                percent(round(1 - returned_stack$on_parole[60]/1000, 2)),
                                                "in prison.",
                                                "At the given cost per prisoner per year, the average cost to the system is",
