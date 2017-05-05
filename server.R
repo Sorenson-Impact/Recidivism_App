@@ -172,9 +172,10 @@ function(input, output) {
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
     stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2))
-    p<-ggplot(stack, aes(x = months, y = values, fill=status, text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status)))+ 
-      geom_bar(stat = "identity",position = "stack")+
-      labs(x="Months",y="Count") +
+    p<-ggplot(stack, aes(x = months, y = values, fill=status, order = status, 
+                         text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status))) + 
+      geom_bar(stat = "identity", position = "stack")+
+      labs(x="Months", y="Count") +
       scale_fill_manual(values=c("#999999", "#bad80a"))
     ggplotly(p,tooltip = "text")
     
@@ -185,7 +186,7 @@ function(input, output) {
     returned_rates <- data.frame(Recidivated=(returned_data$rates),Month=rep.int(1:60,2))
     p<-ggplot(returned_rates,aes(x=Month))+
     geom_line(aes(y=Recidivated))+scale_y_continuous(labels=percent)+
-    labs(x="Months",y="% Recidivated", colour="Status")
+    labs(x="Months", y= "% Recidivated\n", colour="Status")
    # print(returned_data$rates)
     ggplotly(p)
   })
