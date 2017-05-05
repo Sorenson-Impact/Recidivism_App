@@ -7,9 +7,9 @@ library(ggplot2)
 library(RColorBrewer)
 library(plotly)
 library(tibble)
-# library(plyr)
 library(dplyr)
 library(tidyr)
+
 
 default_data <- read.csv("./default_data.csv")
 default_arrests <-read.csv("./default_arrests.csv")
@@ -173,7 +173,8 @@ function(input, output) {
     returned_stack <- returned_data$parolees
     stack <- data.frame(values=c( returned_stack$on_parole, returned_stack$prisoners),
                         status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2)) %>% 
-      mutate(status = factor(status, levels = c("Parolees", "Prisoners")))
+      mutate(status = factor(status, levels = c("Parolees", "Prisoners"))) %>% 
+      arrange(status)
     p<-ggplot(stack, aes(x = months, y = values, fill=status, order = status, 
                          text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status))) + 
       geom_bar(stat = "identity", position = "stack")+
