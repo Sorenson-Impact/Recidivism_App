@@ -171,7 +171,9 @@ function(input, output) {
   output$plot <- renderPlotly({
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
-    stack<-data.frame(values=c( returned_stack$on_parole,returned_stack$prisoners),status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2))
+    stack <- data.frame(values=c( returned_stack$on_parole, returned_stack$prisoners),
+                        status=rep(c("Parolees","Prisoners"),each=60),months=rep.int(1:60,2)) %>% 
+      mutate(status = factor(status, levels = c("Parolees", "Prisoners")))
     p<-ggplot(stack, aes(x = months, y = values, fill=status, order = status, 
                          text = paste("Count:", values,"<br>Month:",months,"<br>Status:",status))) + 
       geom_bar(stat = "identity", position = "stack")+
