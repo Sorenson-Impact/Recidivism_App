@@ -215,16 +215,17 @@ function(input, output) {
   output$graph1<-renderUI({
     returned_data <- rv$data
     returned_stack <- returned_data$parolees
-    stack<-data.frame(values=c(on_parole= returned_stack$on_parole,imprisoned=returned_stack$prisoners),status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
-    HTML(paste(h4("In Prison vs. On Parole"), p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ",
-                                               percent(round(1 - returned_stack$on_parole[60]/1000, 2)),
-                                               "in prison.",
-                                               "At the given cost per prisoner per year, the average cost to the system is",
-                                               dollar((input$cost_per_yr*(1000 - returned_stack$on_parole[1])/12)),
-                                                "in the first month and ",
-                                               dollar((input$cost_per_yr*(1000 - returned_stack$on_parole[60])/12)),
-                                                "in the last month (prisoners * cost / 12)."))
+    stack <- data.frame(values=c(on_parole = returned_stack$on_parole,imprisoned = returned_stack$prisoners), status=rep(c("On Parole","Prisoners"),each=60),months=rep.int(1:60,2))
+    HTML(paste(h4("In Prison vs. On Parole"), p("This app uses national data to simulate 1,000 people released from prison at the same time. The months immediatly after release are when a parolee is most likely to recidiviate, which is why there is sharp increase in prisoners. By month 60, this levels off to an average of ", percent(round(1 - returned_stack$on_parole[60]/1000, 2)),"in prison. The x-axis on the chart below shows the month number of the simulation, from 1-60. The y-axis is a stacked bar chart that shows the number of people that are in prison vs. on parole. Each month it is a different group: some are released from prison and some enter."))
     )
+  })
+  
+  output$costData <- renderUI({
+    returned_data <- rv$data
+    returned_stack <- returned_data$parolees
+    avg_prisoners <- 1000 - (sum(returned_stack$on_parole) / 60)
+    HTML(paste(h4("Costs"), p("Costs are calculated as a simple function of the number of people in prison during a given month (prisoners * cost / 12). For instance, the average cost to the system is", dollar(round(input$cost_per_yr*(1000 - returned_stack$on_parole[1])/12)), "in the first month and ", dollar(round(input$cost_per_yr*(1000 - returned_stack$on_parole[60])/12)), "in the last month. A more general way to think of costs is the average prison cost per person (prisoners * cost / 12 / 1,000). Using this method, the average cost per person is", dollar(round(input$cost_per_yr*(1000 - returned_stack$on_parole[1])/12/1000)), "in the first month and ", dollar(round(input$cost_per_yr*(1000 - returned_stack$on_parole[60])/12/1000)), "in the last month. The average annual per person cost is", dollar(round(input$cost_per_yr * avg_prisoners / 1000)), "(Annual Cost * Avg # Prisoners / 1,000).")
+    ))
   })
   
   output$graph2<-renderUI({
@@ -237,7 +238,7 @@ function(input, output) {
   output$graph3<-renderUI({
     returned_data<-rv$data
     returned_arrests<-data.frame(Arrests=returned_data$arrested)
-    HTML(paste(h4("Number of Arrests per Person"), p(paste("Unfortunately, it is common for parolees to be rearrested more than once. In this simulation,"),percent(round(length(which(returned_arrests > 1))/1000,2)),"were arrested 2 or more times within 60 months."))
+    HTML(paste(h4("Number of Arrests per Person"), p(paste("Unfortunately, it is common for parolees to be rearrested more than once. In this simulation,"),percent(round(length(which(returned_arrests > 1))/1000,2)),"were arrested 2 or more times within 60 months. Those arrested served an average of sentence of", input$prison_time_served, "months, and a median sentence of", round(median(rexp(1000, 1/input$prison_time_served))), "months."))
     )
   })
 }
