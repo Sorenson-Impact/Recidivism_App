@@ -83,9 +83,13 @@ fluidPage(
         p("where X is the prison sentence and is drawn randomly from an exponential distribution that is parameterized by lamda, which is 1/mean."),
         p("The reason for selecting an exponential distribution (as opposed to, say, a normal distribution) is that it better captures the difference between the average prison sentence and the median, 25.3. In many prison systems, the average is much longer because of outliers, i.e., those who commit serious crimes and go to prison for life. The median is more representative of a typical outcome. Nevertheless, we do not want to leave out the possibility of someone receiving a very long sentence."),
         h4("Costs"),
-        p("The Vera Institute reports that the average per-inmate cost was $31,286 in FY2010", a("(Source)", href = "https://www.vera.org/publications/the-price-of-prisons-what-incarceration-costs-taxpayers"), ". This varies widely by state, but could be used as good starting point for calculating total costs. In order to calculate the potential benefits of reducing recidivism, we strongly recomend using", a("marginal costs.", href = "http://archive.vera.org/sites/default/files/resources/downloads/marginal-costs-guide.pdf")),
+        p("The Vera Institute reports that the average per-inmate cost was $31,286 in FY2010", a("(Source)", href = "https://www.vera.org/publications/the-price-of-prisons-what-incarceration-costs-taxpayers"), ". This varies widely by state, but could be used as good starting point for calculating total costs. In order to calculate the potential benefits of reducing recidivism, we strongly reccomend using", a("marginal costs.", href = "http://archive.vera.org/sites/default/files/resources/downloads/marginal-costs-guide.pdf")),
+        h4("Model"),
+        p("The parameters above are fed into a simple agent-based stochastic model, where each of 1,000 agents is simulated over 60 months. This can be visualized with the following GIF, where the x-axis shows the number of months free, from -60 to 60, and the dots on the y-axis show a random sample of agents. Negative numbers on the x-axis represent time spent in prison."),
+        img(src="model_output.gif", style="display: block; margin-left: auto; margin-right: auto;"),
         p("We hope that analysts will be able to use this to approximately judge how prison time changes as a function of the average prison sentence in conjunction with the recidivism rate. We are available to answer questions, and help communities that wish to measure the impact of recidivism using local data."),
         p(a("- The Sorenson Impact Data Team", href = "http://sorensonimpact.com/team"))
+        
         )
       )
     )
